@@ -8,10 +8,16 @@ services:
         echo 'Waiting for postgres to be ready...'
         sleep 2
       done &&
+      while ! nc -z mysql 3306; do
+        echo 'Waiting for mysql to be ready...'
+        sleep 2
+      done &&
       python manage.py makemigrations auth_service &&
       python manage.py makemigrations system_a &&
       python manage.py makemigrations system_b &&
-      python manage.py migrate &&
+      python manage.py migrate auth_service --database=default &&
+      python manage.py migrate system_a --database=system_a &&
+      python manage.py migrate system_b --database=system_b &&
       python manage.py collectstatic --noinput &&
       gunicorn sso_project.wsgi:application --bind 0.0.0.0:8000 --workers 4"
     volumes:
