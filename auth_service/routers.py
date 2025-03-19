@@ -1,4 +1,3 @@
-
 class AuthRouter:
     """
     Router to manage database operations for authentication and application-specific data.

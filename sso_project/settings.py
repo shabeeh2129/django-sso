@@ -37,6 +37,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',
+    'auth_service',  # Ensure this is the first app
+    'system_a',
+    'system_b',
 ]
 
 MIDDLEWARE = [
@@ -47,7 +51,24 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'auth_service.middlewares.JWTAuthenticationMiddleware',  
+    'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'auth_service.middlewares.JWTAuthenticationMiddleware',  
 ]
+
+
+REST_FRAMEWORK = {
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle'
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '100/day',
+        'user': '1000/day'
+    }
+}
+
 
 ROOT_URLCONF = 'sso_project.urls'
 
@@ -75,10 +96,47 @@ WSGI_APPLICATION = 'sso_project.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'sso_auth_db',
+        'USER': 'postgres',
+        'PASSWORD': 'password',
+        'HOST': 'postgres',
+        'PORT': '5432',
+    },
+    'system_a': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'system_a_db',
+        'USER': 'mysql_user',
+        'PASSWORD': 'password',
+        'HOST': 'mysql',
+        'PORT': '3306',
+    },
+    'system_b': {
+        'ENGINE': 'djongo',
+        'NAME': 'system_b_db',
+        'CLIENT': {
+            'host': 'mongodb://mongodb:27017',
+        }
     }
 }
+
+
+# Database routers
+DATABASE_ROUTERS = ['config.routers.AuthRouter']
+
+# Caching Configuration
+CACHES = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': 'redis://127.0.0.1:6379/1',
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+            'SOCKET_TIMEOUT': 5,  # Timeout for Redis connections
+        }
+    }
+}
+
+
 
 
 # Password validation
@@ -98,6 +156,17 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
+
+
+PASSWORD_HASHERS = [
+    'django.contrib.auth.hashers.Argon2PasswordHasher',
+    'django.contrib.auth.hashers.PBKDF2PasswordHasher',
+    'django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher',
+]
+
+
+
+AUTH_USER_MODEL = "auth_service.User"
 
 
 # Internationalization
@@ -121,3 +190,8 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+SESSION_COOKIE_SECURE = True
+SESSION_COOKIE_HTTPONLY = True
+CSRF_COOKIE_SECURE = True
+CSRF_COOKIE_HTTPONLY = True
