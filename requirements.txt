@@ -1,5 +1,5 @@
 asgiref
-Django==3.2
+Django
 django-allauth
 djangorestframework
 psycopg2-binary 
@@ -12,3 +12,5 @@ django-redis
 PyJWT
 pytz
 gunicorn
+argon2-cffi
+whitenoise
