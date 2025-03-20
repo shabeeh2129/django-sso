@@ -51,7 +51,11 @@ cd django-sso
 
 2. Build and run with Docker Compose:
 ```bash
-docker-compose up --build
+docker-compose build --no-cache
+
+docker-compose up --force-recreate --build -d
+
+docker-compose logs -f web
 ```
 
 ## API Documentation
