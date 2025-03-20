@@ -7,6 +7,8 @@ from django.core.cache import cache
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework_simplejwt.tokens import RefreshToken
 from .serializers import (
     UserSerializer, UserProfileSerializer, UserPreferenceSerializer, 
     UserRegistrationSerializer, LoginSerializer
@@ -16,6 +18,8 @@ from .services import UserService
 User = get_user_model()
 
 class RegisterView(APIView):
+    permission_classes = [AllowAny]
+    
     def post(self, request):
         serializer = UserRegistrationSerializer(data=request.data)
         if serializer.is_valid():
@@ -24,8 +28,8 @@ class RegisterView(APIView):
                 user = UserService.create_user(
                     email=data['email'],
                     password=data['password'],
-                    first_name=data['first_name'],
-                    last_name=data['last_name'],
+                    first_name=data.get('first_name', ''),
+                    last_name=data.get('last_name', ''),
                     phone_number=data.get('phone_number', ''),
                     address=data.get('address', '')
                 )
@@ -35,6 +39,8 @@ class RegisterView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class LoginView(APIView):
+    permission_classes = [AllowAny]
+    
     def post(self, request):
         serializer = LoginSerializer(data=request.data)
         if serializer.is_valid():
@@ -43,26 +49,19 @@ class LoginView(APIView):
             
             user = authenticate(email=email, password=password)
             if user:
-                # Generate JWT token
-                payload = {
-                    'user_id': str(user.id),
-                    'email': user.email,
-                    'role': user.role,
-                    'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)
-                }
-                token = jwt.encode(payload, settings.SECRET_KEY, algorithm='HS256')
-                
-                # Cache the token
-                cache_key = f'jwt_token_{token}'
-                cache.set(cache_key, str(user.id), 86400)  # Cache for 24 hours
-                
-                return Response({'token': token}, status=status.HTTP_200_OK)
+                refresh = RefreshToken.for_user(user)
+                return Response({
+                    'refresh': str(refresh),
+                    'access': str(refresh.access_token),
+                }, status=status.HTTP_200_OK)
             return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class UserProfileView(APIView):
+    permission_classes = [IsAuthenticated]
+    
     def get(self, request):
-        user_id = request.user_id
+        user_id = request.user.id
         
         # Fetch user data from PostgreSQL
         user = UserService.get_user(user_id)
@@ -84,7 +83,7 @@ class UserProfileView(APIView):
         return Response(user_data, status=status.HTTP_200_OK)
     
     def patch(self, request):
-        user_id = request.user_id
+        user_id = request.user.id
         
         # Update user profile data
         profile_data = request.data.get('profile', {})
