@@ -21,3 +21,4 @@ django-filter==23.5
 django-ratelimit==4.1.0
 python-dotenv==1.0.1
 cryptography==42.0.5
+drf-yasg==1.21.7

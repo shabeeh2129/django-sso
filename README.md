@@ -1,171 +1,198 @@
-# Django Single Sign-On (SSO) System with Multi-Database Management
+# Django SSO Project with Multi-Database Architecture
 
-A scalable Single Sign-On system built with Django that implements centralized authentication using PostgreSQL while managing application-specific data across MySQL and MongoDB databases.
+A sophisticated Single Sign-On (SSO) system built with Django that demonstrates a microservices-like architecture using multiple databases.
 
-## 🏗️ Architecture
+## Architecture Overview
 
-### Database Structure
-- **PostgreSQL**: Central authentication database (User credentials, JWT tokens)
-- **MySQL**: System A specific user data (User profiles)
-- **MongoDB**: System B specific user data (User preferences)
-- **Redis**: Caching and session management
+The project uses three different databases to handle different aspects of the application:
 
-### Key Features
-- Centralized authentication with JWT tokens
-- Multi-database management with database routers
-- Role-based access control (Admin/User)
-- Lazy loading of user details
-- Redis caching for performance optimization
-- PostgreSQL read replicas for scalability
-- Rate limiting and security measures
+1. **PostgreSQL (Authentication Service)**
+   - Handles user authentication
+   - Manages user credentials and roles
+   - JWT token management
 
-## 🚀 Getting Started
+2. **MySQL (System A)**
+   - Stores user profiles
+   - Manages department information
+   - Handles employee-specific data
 
-### Prerequisites
+3. **MongoDB (System B)**
+   - Stores user preferences
+   - Manages dashboard layouts
+   - Handles work hours and notification settings
+
+## Features
+
+- Single Sign-On (SSO) authentication
+- JWT-based authentication
+- Multi-database architecture
+- Redis caching
+- Swagger API documentation
+- Department management
+- User preferences management
+- Profile management
+
+## Prerequisites
+
 - Docker and Docker Compose
-- Git
+- Python 3.10+
+- PostgreSQL
+- MySQL
+- MongoDB
+- Redis
 
-### Quick Start
+## Installation
+
 1. Clone the repository:
-   ```bash
-   git clone <repository-url>
-   cd django-sso
-   ```
+```bash
+git clone <repository-url>
+cd django-sso
+```
 
-2. Start the services:
-   ```bash
-   docker-compose up --build
-   ```
+2. Build and run with Docker Compose:
+```bash
+docker-compose up --build
+```
 
-3. Access the application:
-   - Admin Interface: http://localhost:8000/admin
-   - API Endpoints: http://localhost:8000/api/
+## API Documentation
 
-### Default Superuser
-- Email: admin@gmail.com
-- Password: abc123
+Access the API documentation at:
+- Swagger UI: `http://localhost:8000/swagger/`
+- ReDoc: `http://localhost:8000/redoc/`
+- OpenAPI JSON: `http://localhost:8000/swagger.json`
 
-## 🔧 Configuration
-
-### Environment Variables
-The following environment variables can be configured:
-- `DJANGO_SETTINGS_MODULE`: Django settings module
-- `POSTGRES_HOST`: PostgreSQL host
-- `MYSQL_HOST`: MySQL host
-- `MONGODB_HOST`: MongoDB host
-- `REDIS_HOST`: Redis host
-
-### Database Configuration
-- PostgreSQL (Authentication):
-  - Database: sso_auth_db
-  - Port: 5432
-
-- MySQL (System A):
-  - Database: system_a_db
-  - Port: 3306
-
-- MongoDB (System B):
-  - Database: system_b_db
-  - Port: 27017
-
-- Redis (Cache):
-  - Port: 6379
-
-## 📡 API Endpoints
+## API Endpoints
 
 ### Authentication
-- `POST /api/register/`: User registration
-- `POST /api/login/`: User login
-- `POST /api/token/refresh/`: Refresh JWT token
-- `POST /api/logout/`: User logout
+- `POST /api/register/` - Register new user
+- `POST /api/login/` - Login user
+- `POST /api/token/refresh/` - Refresh JWT token
+- `POST /api/token/verify/` - Verify JWT token
 
-### User Management
-- `GET /api/user/profile/`: Get user profile
-- `PUT /api/user/profile/`: Update user profile
-- `GET /api/user/preferences/`: Get user preferences
-- `PUT /api/user/preferences/`: Update user preferences
+### User Profile (MySQL)
+- `GET /api/system-a/profiles/` - List all profiles
+- `POST /api/system-a/profiles/` - Create new profile
+- `GET /api/system-a/profiles/{user_id}/` - Get specific profile
+- `PUT /api/system-a/profiles/{user_id}/` - Update profile
+- `DELETE /api/system-a/profiles/{user_id}/` - Delete profile
 
-## 🛡️ Security Features
+### Departments (MySQL)
+- `GET /api/system-a/departments/` - List all departments
+- `POST /api/system-a/departments/` - Create new department
+- `GET /api/system-a/departments/{id}/` - Get specific department
+- `PUT /api/system-a/departments/{id}/` - Update department
+- `DELETE /api/system-a/departments/{id}/` - Delete department
 
-- Argon2 password hashing
-- JWT authentication with refresh tokens
-- Rate limiting on authentication endpoints
-- CORS configuration
-- HTTP-only secure cookies
-- XSS and CSRF protection
-- HSTS enabled
-- Content Security Policy headers
+### User Preferences (MongoDB)
+- `GET /api/system-b/preferences/` - List all preferences
+- `POST /api/system-b/preferences/` - Create new preferences
+- `GET /api/system-b/preferences/{user_id}/` - Get specific preferences
+- `PUT /api/system-b/preferences/{user_id}/` - Update preferences
+- `DELETE /api/system-b/preferences/{user_id}/` - Delete preferences
 
-## 🔍 Monitoring and Performance
+## Usage Examples
 
-### Caching Strategy
-- Redis caching for frequently accessed data
-- Session storage in Redis
-- Configurable cache timeout (default: 5 minutes)
-- Connection pooling for database connections
+1. Register a new user:
+```bash
+curl --location 'http://localhost:8000/api/register/' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "email": "engineer@example.com",
+    "password": "Test@123",
+    "first_name": "John",
+    "last_name": "Doe",
+    "department_id": 1,
+    "position": "Software Engineer"
+}'
+```
 
-### Database Optimization
-- Database connection pooling
-- PostgreSQL read replicas
-- Lazy loading of related data
-- Database-specific routers for query optimization
+2. Login:
+```bash
+curl --location 'http://localhost:8000/api/login/' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "email": "engineer@example.com",
+    "password": "Test@123"
+}'
+```
 
-## 🐳 Docker Services
+3. Update preferences:
+```bash
+curl --location --request PATCH 'http://localhost:8000/api/system-b/preferences/{user_id}/' \
+--header 'Authorization: Bearer <your_token>' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "theme": "dark",
+    "language": "en",
+    "notifications_enabled": true
+}'
+```
 
-- `web`: Django application with Gunicorn
-- `postgres`: Main PostgreSQL database
-- `postgres_replica`: PostgreSQL read replica
-- `mysql`: MySQL database for System A
-- `mongodb`: MongoDB database for System B
-- `redis`: Redis for caching
-- `nginx`: Nginx reverse proxy
+## Security Features
 
-## 📦 Dependencies
+- JWT Authentication
+- Password hashing with Argon2
+- CORS protection
+- XSS protection
+- CSRF protection
+- Secure cookie configuration
+- HTTP-only cookies
+- Rate limiting
+- Redis session backend
 
-Key packages and their versions:
-- Django 3.2.24
-- Django REST Framework 3.14.0
-- djangorestframework-simplejwt 5.3.1
-- django-redis 5.4.0
-- psycopg2-binary 2.9.9
-- mysqlclient 2.2.4
-- djongo 1.3.6
-- redis 4.6.0
-- gunicorn 21.2.0
-- whitenoise 6.6.0
+## Caching
 
-## 🔒 Security Recommendations
+The project uses Redis for:
+- Session storage
+- Cache backend
+- Rate limiting
 
-1. Change default superuser credentials
-2. Use environment variables for sensitive data
-3. Enable SSL/TLS in production
-4. Regular security audits
-5. Monitor rate limiting and failed login attempts
+## Development
 
-## 🚦 Health Checks
+1. Create a virtual environment:
+```bash
+python -m venv venv
+source venv/bin/activate  # Linux/Mac
+venv\Scripts\activate  # Windows
+```
 
-The system includes health checks for:
-- PostgreSQL database connection
-- MySQL database connection
-- MongoDB connection
-- Redis cache availability
+2. Install dependencies:
+```bash
+pip install -r requirements.txt
+```
 
-## 📈 Scaling Considerations
+3. Run migrations:
+```bash
+python manage.py migrate
+```
 
-- Horizontal scaling with Gunicorn workers
-- PostgreSQL read replicas for read-heavy operations
-- Redis caching for performance
-- Connection pooling for database efficiency
-- Nginx for load balancing
+4. Create initial departments:
+```bash
+python manage.py setup_departments
+```
 
-## 🤝 Contributing
+## Docker Configuration
+
+The project includes:
+- Multi-container setup with Docker Compose
+- Separate containers for each database
+- Nginx for serving static files
+- Redis container for caching
+- Wait-for-it scripts for proper container orchestration
+
+## Contributing
 
 1. Fork the repository
-2. Create a feature branch
+2. Create your feature branch
 3. Commit your changes
 4. Push to the branch
-5. Create a Pull Request
+5. Create a new Pull Request
 
-## 📝 License
+## License
 
-This project is licensed under the MIT License - see the LICENSE file for details. 
+This project is licensed under the BSD License.
+
+## Contact
+
+- Email: s.naqvi2129@gmail.com
+- Website: https://shabeehnaqvi.com 

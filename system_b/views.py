@@ -6,11 +6,20 @@ from .models import UserPreference
 from auth_service.services import UserService
 from auth_service.serializers import UserPreferenceSerializer
 from rest_framework import generics, status
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
 
 
 class SystemBTestView(APIView):
     permission_classes = [IsAuthenticated]
     
+    @swagger_auto_schema(
+        operation_description="Test endpoint for System B",
+        responses={
+            200: "Success response with user and preferences data",
+            404: "User or preferences not found"
+        }
+    )
     def get(self, request):
         user_id = request.user.id
         
@@ -51,6 +60,7 @@ class SystemBTestView(APIView):
             'databases_accessed': ['PostgreSQL', 'MongoDB']
         })
 
+@swagger_auto_schema(tags=['User Preferences'])
 class UserPreferenceListCreateView(generics.ListCreateAPIView):
     queryset = UserPreference.objects.all()
     serializer_class = UserPreferenceSerializer
@@ -59,6 +69,7 @@ class UserPreferenceListCreateView(generics.ListCreateAPIView):
     def perform_create(self, serializer):
         serializer.save(user_id=self.request.user.id)
 
+@swagger_auto_schema(tags=['User Preferences'])
 class UserPreferenceDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = UserPreference.objects.all()
     serializer_class = UserPreferenceSerializer

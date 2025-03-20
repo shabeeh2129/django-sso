@@ -6,11 +6,20 @@ from .models import UserProfile, Department
 from auth_service.services import UserService
 from auth_service.serializers import UserProfileSerializer, DepartmentSerializer
 from rest_framework import generics, status
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
 
 
 class SystemATestView(APIView):
     permission_classes = [IsAuthenticated]
     
+    @swagger_auto_schema(
+        operation_description="Test endpoint for System A",
+        responses={
+            200: "Success response with user and profile data",
+            404: "User or profile not found"
+        }
+    )
     def get(self, request):
         user_id = request.user.id
         
@@ -49,6 +58,7 @@ class SystemATestView(APIView):
             'databases_accessed': ['PostgreSQL', 'MySQL']
         })
 
+@swagger_auto_schema(tags=['User Profiles'])
 class UserProfileListCreateView(generics.ListCreateAPIView):
     queryset = UserProfile.objects.all()
     serializer_class = UserProfileSerializer
@@ -57,17 +67,20 @@ class UserProfileListCreateView(generics.ListCreateAPIView):
     def perform_create(self, serializer):
         serializer.save(user_id=self.request.user.id)
 
+@swagger_auto_schema(tags=['User Profiles'])
 class UserProfileDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = UserProfile.objects.all()
     serializer_class = UserProfileSerializer
     permission_classes = [IsAuthenticated]
     lookup_field = 'user_id'
 
+@swagger_auto_schema(tags=['Departments'])
 class DepartmentListCreateView(generics.ListCreateAPIView):
     queryset = Department.objects.all()
     serializer_class = DepartmentSerializer
     permission_classes = [IsAuthenticated]
 
+@swagger_auto_schema(tags=['Departments'])
 class DepartmentDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Department.objects.all()
     serializer_class = DepartmentSerializer
