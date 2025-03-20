@@ -9,8 +9,13 @@ User = get_user_model()
 
 class UserService:
     @staticmethod
+    def _get_cache_key(prefix, user_id):
+        """Generate a consistent cache key."""
+        return f'{prefix}_{user_id}'
+
+    @staticmethod
     def get_user(user_id):
-        cache_key = f'user_{user_id}'
+        cache_key = UserService._get_cache_key('user', user_id)
         user = cache.get(cache_key)
         if not user:
             try:
@@ -23,7 +28,7 @@ class UserService:
     
     @staticmethod
     def get_user_profile(user_id):
-        cache_key = f'profile_{user_id}'
+        cache_key = UserService._get_cache_key('profile', user_id)
         profile = cache.get(cache_key)
         if not profile:
             try:
@@ -36,7 +41,7 @@ class UserService:
     
     @staticmethod
     def get_user_preferences(user_id):
-        cache_key = f'preferences_{user_id}'
+        cache_key = UserService._get_cache_key('preferences', user_id)
         preferences = cache.get(cache_key)
         if not preferences:
             try:
@@ -82,7 +87,7 @@ class UserService:
             setattr(user, key, value)
         user.save()
 
-        cache.delete(f'user_{user_id}')
+        cache.delete(UserService._get_cache_key('user', user_id))
         return user
     
     @staticmethod
@@ -104,7 +109,7 @@ class UserService:
             setattr(profile, key, value)
         
         profile.save()
-        cache.delete(f'profile_{user_id}')
+        cache.delete(UserService._get_cache_key('profile', user_id))
         return profile
     
     @staticmethod
@@ -114,5 +119,5 @@ class UserService:
         for key, value in preferences_data.items():
             setattr(preferences, key, value)
         preferences.save()
-        cache.delete(f'preferences_{user_id}')
+        cache.delete(UserService._get_cache_key('preferences', user_id))
         return preferences

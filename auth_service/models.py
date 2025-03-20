@@ -50,11 +50,11 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def get_full_name(self):
         """Return the full name of the user."""
-        return self.email
+        return f"{self.email} ({self.role})"
 
     def get_short_name(self):
         """Return the short name of the user."""
-        return self.email
+        return self.email.split('@')[0]  # Return username part of email
 
     class Meta:
         app_label = "auth_service"

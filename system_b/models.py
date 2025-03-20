@@ -15,37 +15,37 @@ class UserPreference(models.Model):
     def __str__(self):
         return f"Preferences for user {self.user_id}"
 
-    def get_default_notification_preferences(self):
+    def get_defaults(self):
+        """Return all default values for the model."""
         return {
-            'email': True,
-            'push': True,
-            'department_updates': True,
-            'task_reminders': True
-        }
-
-    def get_default_dashboard_layout(self):
-        return {
-            'widgets': [
-                {'id': 'tasks', 'position': 1},
-                {'id': 'department_updates', 'position': 2},
-                {'id': 'calendar', 'position': 3}
-            ]
-        }
-
-    def get_default_work_hours(self):
-        return {
-            'monday': {'start': '09:00', 'end': '17:00'},
-            'tuesday': {'start': '09:00', 'end': '17:00'},
-            'wednesday': {'start': '09:00', 'end': '17:00'},
-            'thursday': {'start': '09:00', 'end': '17:00'},
-            'friday': {'start': '09:00', 'end': '17:00'}
+            'notification_preferences': {
+                'email': True,
+                'push': True,
+                'department_updates': True,
+                'task_reminders': True
+            },
+            'dashboard_layout': {
+                'widgets': [
+                    {'id': 'tasks', 'position': 1},
+                    {'id': 'department_updates', 'position': 2},
+                    {'id': 'calendar', 'position': 3}
+                ]
+            },
+            'work_hours': {
+                'monday': {'start': '09:00', 'end': '17:00'},
+                'tuesday': {'start': '09:00', 'end': '17:00'},
+                'wednesday': {'start': '09:00', 'end': '17:00'},
+                'thursday': {'start': '09:00', 'end': '17:00'},
+                'friday': {'start': '09:00', 'end': '17:00'}
+            }
         }
 
     def save(self, *args, **kwargs):
+        defaults = self.get_defaults()
         if not self.notification_preferences:
-            self.notification_preferences = self.get_default_notification_preferences()
+            self.notification_preferences = defaults['notification_preferences']
         if not self.dashboard_layout:
-            self.dashboard_layout = self.get_default_dashboard_layout()
+            self.dashboard_layout = defaults['dashboard_layout']
         if not self.work_hours:
-            self.work_hours = self.get_default_work_hours()
+            self.work_hours = defaults['work_hours']
         super().save(*args, **kwargs)
