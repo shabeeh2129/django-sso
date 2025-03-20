@@ -6,6 +6,7 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y \
     netcat-openbsd \
     build-essential \
+    vim \
     libpq-dev \
     default-libmysqlclient-dev \
     pkg-config \
