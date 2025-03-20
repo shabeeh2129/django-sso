@@ -9,6 +9,8 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
 from .serializers import (
     UserSerializer, UserProfileSerializer, UserPreferenceSerializer, 
     UserRegistrationSerializer, LoginSerializer
@@ -20,6 +22,26 @@ User = get_user_model()
 class RegisterView(APIView):
     permission_classes = [AllowAny]
     
+    @swagger_auto_schema(
+        operation_description="Register a new user",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=['email', 'password'],
+            properties={
+                'email': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_EMAIL),
+                'password': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_PASSWORD),
+                'first_name': openapi.Schema(type=openapi.TYPE_STRING),
+                'last_name': openapi.Schema(type=openapi.TYPE_STRING),
+                'phone_number': openapi.Schema(type=openapi.TYPE_STRING),
+                'address': openapi.Schema(type=openapi.TYPE_STRING),
+            }
+        ),
+        responses={
+            201: openapi.Response('User registered successfully'),
+            400: openapi.Response('Bad request')
+        },
+        tags=['Authentication']
+    )
     def post(self, request):
         serializer = UserRegistrationSerializer(data=request.data)
         if serializer.is_valid():
@@ -41,6 +63,31 @@ class RegisterView(APIView):
 class LoginView(APIView):
     permission_classes = [AllowAny]
     
+    @swagger_auto_schema(
+        operation_description="Login with email and password to get JWT tokens",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=['email', 'password'],
+            properties={
+                'email': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_EMAIL),
+                'password': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_PASSWORD),
+            }
+        ),
+        responses={
+            200: openapi.Response(
+                'Login successful',
+                schema=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        'refresh': openapi.Schema(type=openapi.TYPE_STRING),
+                        'access': openapi.Schema(type=openapi.TYPE_STRING),
+                    }
+                )
+            ),
+            401: openapi.Response('Invalid credentials')
+        },
+        tags=['Authentication']
+    )
     def post(self, request):
         serializer = LoginSerializer(data=request.data)
         if serializer.is_valid():
@@ -60,6 +107,14 @@ class LoginView(APIView):
 class UserProfileView(APIView):
     permission_classes = [IsAuthenticated]
     
+    @swagger_auto_schema(
+        operation_description="Get user profile data including preferences",
+        responses={
+            200: UserSerializer,
+            404: openapi.Response('User not found')
+        },
+        tags=['User Profile']
+    )
     def get(self, request):
         user_id = request.user.id
         
@@ -82,6 +137,36 @@ class UserProfileView(APIView):
         
         return Response(user_data, status=status.HTTP_200_OK)
     
+    @swagger_auto_schema(
+        operation_description="Update user profile and preferences",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'profile': openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        'first_name': openapi.Schema(type=openapi.TYPE_STRING),
+                        'last_name': openapi.Schema(type=openapi.TYPE_STRING),
+                        'phone_number': openapi.Schema(type=openapi.TYPE_STRING),
+                        'address': openapi.Schema(type=openapi.TYPE_STRING),
+                    }
+                ),
+                'preferences': openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        'theme': openapi.Schema(type=openapi.TYPE_STRING),
+                        'language': openapi.Schema(type=openapi.TYPE_STRING),
+                        'notifications_enabled': openapi.Schema(type=openapi.TYPE_BOOLEAN),
+                    }
+                )
+            }
+        ),
+        responses={
+            200: openapi.Response('User data updated successfully'),
+            400: openapi.Response('Bad request')
+        },
+        tags=['User Profile']
+    )
     def patch(self, request):
         user_id = request.user.id
         
