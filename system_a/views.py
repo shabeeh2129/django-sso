@@ -4,8 +4,9 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from .models import UserProfile, Department
 from auth_service.services import UserService
+from auth_service.serializers import UserProfileSerializer, DepartmentSerializer
+from rest_framework import generics, status
 
-# Create your views here.
 
 class SystemATestView(APIView):
     permission_classes = [IsAuthenticated]
@@ -13,7 +14,6 @@ class SystemATestView(APIView):
     def get(self, request):
         user_id = request.user.id
         
-        # Get user profile from MySQL
         profile = UserService.get_user_profile(user_id)
         if not profile:
             return Response({
@@ -22,7 +22,6 @@ class SystemATestView(APIView):
                 'database': 'MySQL'
             }, status=404)
         
-        # Get user data from PostgreSQL
         user = UserService.get_user(user_id)
         if not user:
             return Response({
@@ -49,3 +48,27 @@ class SystemATestView(APIView):
             },
             'databases_accessed': ['PostgreSQL', 'MySQL']
         })
+
+class UserProfileListCreateView(generics.ListCreateAPIView):
+    queryset = UserProfile.objects.all()
+    serializer_class = UserProfileSerializer
+    permission_classes = [IsAuthenticated]
+
+    def perform_create(self, serializer):
+        serializer.save(user_id=self.request.user.id)
+
+class UserProfileDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = UserProfile.objects.all()
+    serializer_class = UserProfileSerializer
+    permission_classes = [IsAuthenticated]
+    lookup_field = 'user_id'
+
+class DepartmentListCreateView(generics.ListCreateAPIView):
+    queryset = Department.objects.all()
+    serializer_class = DepartmentSerializer
+    permission_classes = [IsAuthenticated]
+
+class DepartmentDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Department.objects.all()
+    serializer_class = DepartmentSerializer
+    permission_classes = [IsAuthenticated]

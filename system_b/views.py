@@ -4,8 +4,9 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from .models import UserPreference
 from auth_service.services import UserService
+from auth_service.serializers import UserPreferenceSerializer
+from rest_framework import generics, status
 
-# Create your views here.
 
 class SystemBTestView(APIView):
     permission_classes = [IsAuthenticated]
@@ -13,7 +14,6 @@ class SystemBTestView(APIView):
     def get(self, request):
         user_id = request.user.id
         
-        # Get user preferences from MongoDB
         preferences = UserService.get_user_preferences(user_id)
         if not preferences:
             return Response({
@@ -22,7 +22,6 @@ class SystemBTestView(APIView):
                 'database': 'MongoDB'
             }, status=404)
         
-        # Get user data from PostgreSQL
         user = UserService.get_user(user_id)
         if not user:
             return Response({
@@ -51,3 +50,17 @@ class SystemBTestView(APIView):
             },
             'databases_accessed': ['PostgreSQL', 'MongoDB']
         })
+
+class UserPreferenceListCreateView(generics.ListCreateAPIView):
+    queryset = UserPreference.objects.all()
+    serializer_class = UserPreferenceSerializer
+    permission_classes = [IsAuthenticated]
+
+    def perform_create(self, serializer):
+        serializer.save(user_id=self.request.user.id)
+
+class UserPreferenceDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = UserPreference.objects.all()
+    serializer_class = UserPreferenceSerializer
+    permission_classes = [IsAuthenticated]
+    lookup_field = 'user_id'
